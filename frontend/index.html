@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to OpenStreetMap</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+
+<body>
+    <div class="user-info-bar" id="user-info">
+        <div class="user-info-content">
+            <div class="mapper-avatar">
+                <span class="avatar-placeholder">👤</span>
+            </div>
+            <div class="mapper-details">
+                <div class="user-loading">Loading user information...</div>
+                <div class="user-error" style="display: none"></div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div id="welcome-message">
+            <div class="changeset-header">
+                <h1>Loading changeset information...</h1>
+            </div>
+        </div>
+        <div id="map"></div>
+        <div id="loading">
+            <div class="loading-spinner"></div>
+            <p>Analyzing your contribution...</p>
+            <p class="status" id="status">Fetching changeset data...</p>
+        </div>
+        <div class="edit-summary" id="edit-summary" style="display: none"></div>
+    </div>
+    <script type="module" src="main.js"></script>
+</body>
+
+</html>
