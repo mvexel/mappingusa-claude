@@ -5,6 +5,12 @@
     --line-height: 1.5;
 }
 
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('fonts/PressStart2P-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+
 body {
     font-family: "Press Start 2P", monospace;
     background: var(--bg);
@@ -71,8 +77,6 @@ body {
 .status {
     animation: blink-text 1s step-end infinite;
 }
-
-
 
 .loading {
     color: var(--amber);
