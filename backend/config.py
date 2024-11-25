@@ -7,7 +7,7 @@ load_dotenv()
 class Config:
     # API Configuration
     ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
-    ANTHROPIC_MODEL = "claude-3-opus-20240229"
+    ANTHROPIC_MODEL = "claude-3-5-haiku-latest"  # https://docs.anthropic.com/en/docs/about-claude/models
     
     # Flask Configuration
     FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
