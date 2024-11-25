@@ -136,7 +136,7 @@ class FirstEditCelebrator {
     return tags;
   }
   formatChangesPrompt(changes) {
-    let prompt = `Please analyze these OpenStreetMap changes and describe them in a friendly, first-person statement that would work well for social media sharing. Focus on the impact on users of OSM data. Be specific about what was changed. No emoji. End with #openstreetmap #firstedit hashtags.\n\n`;
+    let prompt = `Please analyze these OpenStreetMap changes and describe them in a friendly, first-person statement that would work well for social media sharing. Focus on the positive impact for map users. Start with "I just made my first edit to #OpenStreetMap!". Be specific about what was changed. No emoji. End with #osm #firstedit hashtags.\n\n`;
 
     ["created", "modified", "deleted"].forEach((action) => {
       if (changes[action].length > 0) {
