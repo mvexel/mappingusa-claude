@@ -82,8 +82,10 @@ def check_first_edit(changeset_id):
         changesets = changesets_tree.findall('.//changeset')
         
         # Check if this is their first edit
-        is_first = len(changesets) == 1 and changesets[0].get('id') == changeset_id
-        
+        logger.info(f"checking changeset {changeset_id}")
+        logger.info([changeset.get('id') for changeset in changesets])
+        is_first = changeset_id in [changeset.get('id') for changeset in changesets]
+        logger.info(is_first)
         return is_first, None
 
     except Exception as e:
