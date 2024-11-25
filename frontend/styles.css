@@ -1,0 +1,79 @@
+:root {
+    --amber: #ffb000;
+    --bg: #0a0805;
+    --font-size: 14px;
+    --line-height: 1.5;
+}
+
+body {
+    font-family: "Press Start 2P", monospace;
+    background: var(--bg);
+    color: var(--amber);
+    margin: 0;
+    padding: 20px;
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+    -webkit-font-smoothing: none;
+}
+
+.terminal {
+    max-width: 40ch;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.header,
+.content,
+.share-button {
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+}
+
+.message {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin-bottom: 40px;
+}
+
+.share-button {
+    width: fit-content;
+    padding: 4px 8px;
+    background: var(--amber);
+    border: 2px solid var(--amber);
+    color: var(--bg);
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+}
+
+.cursor {
+    width: 12px;
+    height: 24px;
+    background: var(--amber);
+    margin-top: 20px;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+@keyframes blink-text {
+    50% {
+        opacity: 0;
+    }
+}
+
+.status {
+    animation: blink-text 1s step-end infinite;
+}
+
+
+
+.loading {
+    color: var(--amber);
+}
