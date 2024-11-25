@@ -136,7 +136,7 @@ class FirstEditCelebrator {
     return tags;
   }
   formatChangesPrompt(changes) {
-    let prompt = `Please analyze these OpenStreetMap changes and describe them in a friendly, first-person statement that would work well for social media sharing. Focus on the positive impact for map users. Start with "I just made my first edit to #OpenStreetMap!". Be specific about what was changed. No emoji. End with #osm #firstedit hashtags.\n\n`;
+    let prompt = `Please analyze these OpenStreetMap changes and describe them in a friendly, first-person statement that would work well for social media sharing. Focus on the positive impact for map users. Start with "I just made my first edit to #OpenStreetMap!". Be specific about what was changed. End with #osm #firstedit hashtags. Do not use any emoji. Your response should be just the message\n\n`;
 
     ["created", "modified", "deleted"].forEach((action) => {
       if (changes[action].length > 0) {
@@ -146,7 +146,7 @@ class FirstEditCelebrator {
         });
       }
     });
-
+    console.log(prompt);
     return prompt;
   }
   showError(message) {
