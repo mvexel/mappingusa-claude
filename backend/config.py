@@ -37,6 +37,8 @@ class Config:
     - Mention specific features (buildings, roads, etc.) when possible
     """
 
+    OVERRIDE_FIRST_EDIT = os.getenv("OVERRIDE_FIRST_EDIT")
+
     @classmethod
     def is_valid(cls):
         """Validate the configuration"""

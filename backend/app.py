@@ -68,6 +68,8 @@ def check_first_edit(changeset_id):
     Server-side verification of whether this is a user's first edit.
     Returns (is_first_edit, error_message)
     """
+    if Config.OVERRIDE_FIRST_EDIT:
+        return True, None
     try:
         # First get the changeset to find the user ID
         changeset_url = (
@@ -95,7 +97,7 @@ def check_first_edit(changeset_id):
         if not user_response.ok:
             return False, "Failed to fetch user changesets"
 
-         # Parse the changesets XML
+        # Parse the changesets XML
         changesets_tree = ElementTree.fromstring(user_response.content)
         changesets = changesets_tree.findall(".//changeset")
 
@@ -135,7 +137,7 @@ def summarize_changeset():
         changeset_id = data["changeset_id"]
         prompt = data["prompt"]
 
-        # Check cache for first-edit status
+        # Check first edit status
         cache_key = f"first_edit_{changeset_id}"
         is_first_edit = cache.get(cache_key)
 
@@ -153,6 +155,7 @@ def summarize_changeset():
             # Cache the result
             cache.set(cache_key, is_first_edit)
 
+        # Always enforce first edit check, regardless of cache status
         if not is_first_edit:
             return (
                 jsonify(
