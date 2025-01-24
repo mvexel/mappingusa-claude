@@ -194,7 +194,7 @@ def summarize_changeset():
             # Cache the response
             cache.set(summary_cache_key, summary)
 
-            return jsonify({"summary": summary, "cached": False})
+            return jsonify({"summary": summary, "cached": False, "changeset_id": changeset_id})
 
         except anthropic.APIError as e:
             logger.error(f"Anthropic API error: {e}")
