@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify, send_from_directory
 from flask_caching import Cache
 from flask_cors import CORS
@@ -22,9 +23,11 @@ CORS(app)
 app.config.from_mapping(Config.CACHE_CONFIG)
 cache = Cache(app)
 
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+
 # Initialize Anthropic client
 try:
-    client = anthropic.Client(api_key=Config.ANTHROPIC_API_KEY)
+    client = anthropic.Client(api_key=ANTHROPIC_API_KEY)
 except Exception as e:
     logger.error(f"Failed to initialize Anthropic client: {e}")
     client = None
@@ -33,7 +36,7 @@ except Exception as e:
 def validate_api_key(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not Config.ANTHROPIC_API_KEY:
+        if not ANTHROPIC_API_KEY:
             return (
                 jsonify(
                     {
@@ -194,7 +197,9 @@ def summarize_changeset():
             # Cache the response
             cache.set(summary_cache_key, summary)
 
-            return jsonify({"summary": summary, "cached": False, "changeset_id": changeset_id})
+            return jsonify(
+                {"summary": summary, "cached": False, "changeset_id": changeset_id}
+            )
 
         except anthropic.APIError as e:
             logger.error(f"Anthropic API error: {e}")
@@ -210,7 +215,7 @@ def health_check():
     """Health check endpoint that validates API key, cache, and OSM API status"""
     status = {
         "timestamp": datetime.utcnow().isoformat(),
-        "api_key_configured": bool(Config.ANTHROPIC_API_KEY),
+        "api_key_configured": bool(ANTHROPIC_API_KEY),
         "cache_enabled": bool(cache.get("health_check")),
         "client_initialized": bool(client),
     }
