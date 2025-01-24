@@ -112,31 +112,32 @@ def check_first_edit(changeset_id):
         return False, str(e)
 
 
+def get_changeset_data(changeset_id: str):
+    """Fetch changeset data from AWS endpoint.
+
+    param changeset_id: The ID of the changeset to fetch
+    type changeset_id: str
+
+    return: The changeset data as a JSON object
+    rtype: dict
+    """
+    url = f"{Config.AWS_CHANGES_ENDPOINT}/{changeset_id}.json"
+    response = requests.get(url)
+    if not response.ok:
+        return None
+    return response.json()
+
+
 @app.route("/")
 def serve_index():
     """Serve the static index.html file"""
     return send_from_directory("static", "index.html")
 
 
-@app.route("/api/summarize", methods=["POST"])
+@app.route("/api/summarize/<changeset_id>", methods=["GET"])
 @validate_api_key
-def summarize_changeset():
+def summarize_changeset(changeset_id):
     try:
-        data = request.get_json()
-        if not data or "prompt" not in data or "changeset_id" not in data:
-            return (
-                jsonify(
-                    {
-                        "error": "Invalid request",
-                        "details": "Missing prompt or changeset_id in request body",
-                    }
-                ),
-                400,
-            )
-
-        changeset_id = data["changeset_id"]
-        prompt = data["prompt"]
-
         # Check first edit status
         cache_key = f"first_edit_{changeset_id}"
         is_first_edit = cache.get(cache_key)
@@ -175,6 +176,21 @@ def summarize_changeset():
             return jsonify({"summary": cached_response, "cached": True})
 
         logger.info(f"Cache miss for key: {summary_cache_key}")
+
+        # Get the changeset data
+        changeset_data = get_changeset_data(changeset_id)
+        if not changeset_data:
+            return (
+                jsonify(
+                    {
+                        "error": "Changeset data not found",
+                        "details": "Could not fetch changeset data",
+                    }
+                ),
+                404,
+            )
+
+        # Generate prompt from changeset data
 
         # Get response from Claude
         try:

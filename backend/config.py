@@ -39,6 +39,8 @@ class Config:
 
     OVERRIDE_FIRST_EDIT = os.getenv("OVERRIDE_FIRST_EDIT")
 
+    AWS_CHANGES_ENDPOINT = "https://real-changesets.s3.us-west-2.amazonaws.com"
+
     @classmethod
     def is_valid(cls):
         """Validate the configuration"""
