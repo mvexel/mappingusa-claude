@@ -31,6 +31,7 @@ class Config:
     When describing edits:
     - Be specific about what was changed
     - Use positive, encouraging language
+    - Avoid technical language like "tags" or "features"
     - Keep responses short (2-3 sentences)
     - Include exactly one relevant emoji
     - Focus on the value the edit adds to the map
