@@ -42,6 +42,7 @@ class FirstEditCelebrator {
   }
 
   async loadChangeset(id) {
+    this.currentChangesetId = id;
     const statusDiv = document.createElement("div");
     statusDiv.className = "status";
     statusDiv.textContent = "INITIALIZING...";
@@ -52,14 +53,17 @@ class FirstEditCelebrator {
 
     try {
       const prompt = await this.generatePrompt(id);
-      const response = await fetch("http://localhost:5000/api/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          changeset_id: id,
-          prompt,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.BACKEND_URL || "http://localhost:5000"}/api/summarize`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            changeset_id: id,
+            prompt,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -70,11 +74,15 @@ class FirstEditCelebrator {
       statusDiv.remove();
 
       const data = await response.json();
+      console.log(data);
       const messageDiv = document.createElement("div");
       messageDiv.className = "message";
       this.contentEl.appendChild(messageDiv);
 
-      await this.typeText(data.summary.toUpperCase(), messageDiv);
+      await this.typeText(
+        `${data.summary} Check it out ➡️ https://osmcha.org/changesets/${this.currentChangesetId} | Make YOUR first edit ➡️ https://openstreetmap.us/get-involved/start-mapping/`,
+        messageDiv
+      );
 
       const button = document.createElement("button");
       button.className = "share-button";
@@ -90,7 +98,7 @@ class FirstEditCelebrator {
 
   async generatePrompt(id) {
     const response = await fetch(
-      `https://api.openstreetmap.org/api/0.6/changeset/${id}/download`,
+      `https://api.openstreetmap.org/api/0.6/changeset/${id}/download`
     );
     const xmlText = await response.text();
     const parser = new DOMParser();
@@ -102,27 +110,45 @@ class FirstEditCelebrator {
 
   parseChangeset(xmlDoc) {
     const changes = {
-      created: [],
-      modified: [],
-      deleted: [],
+      create: [],
+      modify: [],
+      delete: [],
     };
 
-    const actionMap = {
-      create: "created",
-      modify: "modified",
-      delete: "deleted",
-    };
+    ["create", "modify", "delete"].forEach((action) => {
+      const elements = xmlDoc.getElementsByTagName(action);
 
-    Object.entries(actionMap).forEach(([xmlAction, arrayName]) => {
-      const section = xmlDoc.getElementsByTagName(xmlAction)[0];
-      if (section) {
+      Array.from(elements).forEach((section) => {
         Array.from(section.children).forEach((element) => {
-          changes[arrayName].push({
+          const item = {
             type: element.tagName,
-            tags: this.extractTags(element),
+            id: element.getAttribute("id"),
+            user: element.getAttribute("user"),
+            timestamp: element.getAttribute("timestamp"),
+            tags: {},
+          };
+
+          // Extract tags
+          Array.from(element.getElementsByTagName("tag")).forEach((tag) => {
+            item.tags[tag.getAttribute("k")] = tag.getAttribute("v");
           });
+
+          // Extract node references only if it's a way
+          if (element.tagName === "way") {
+            item.nodes = Array.from(element.getElementsByTagName("nd")).map(
+              (nd) => nd.getAttribute("ref")
+            );
+          }
+
+          const key = action;
+          if (!changes[key]) {
+            console.error(`Unexpected key: ${key}`);
+            return;
+          }
+
+          changes[key].push(item);
         });
-      }
+      });
     });
 
     return changes;
@@ -130,25 +156,42 @@ class FirstEditCelebrator {
 
   extractTags(element) {
     const tags = {};
-    Array.from(element.getElementsByTagName("tag")).forEach((tag) => {
-      tags[tag.getAttribute("k")] = tag.getAttribute("v");
-    });
+    const tagElements = element.getElementsByTagName("tag");
+    if (tagElements) {
+      Array.from(tagElements).forEach((tag) => {
+        tags[tag.getAttribute("k")] = tag.getAttribute("v");
+      });
+    }
     return tags;
   }
-  formatChangesPrompt(changes) {
-    let prompt = `Please analyze these OpenStreetMap changes and describe them in a friendly, first-person statement that would work well for social media sharing. Focus on the positive impact for map users. Start with "I just made my first edit to #OpenStreetMap!". Be specific about what was changed. End with #osm #firstedit hashtags. Do not use any emoji. Your response should be just the message\n\n`;
 
-    ["created", "modified", "deleted"].forEach((action) => {
-      if (changes[action].length > 0) {
+  formatChangesPrompt(changes) {
+    let prompt = `Please analyze these OpenStreetMap changes and describe them in a friendly, first-person statement that would work well for social media sharing. Focus on the positive impact for map users. Start with "I just made my first edit to #OpenStreetMap!". Be specific about what was changed. End with #osm #firstedit hashtags. Do not use any emoji. Your response should be just the message.\n\n`;
+
+    ["create", "modify", "delete"].forEach((action) => {
+      if (!changes[action]) return; // Ensure the action key exists
+
+      // Filter out nodes with no tags
+      let filteredItems = changes[action].filter(
+        (item) =>
+          item.type !== "node" ||
+          (item.tags && Object.keys(item.tags).length > 0)
+      );
+
+      if (filteredItems.length > 0) {
         prompt += `\n${action.charAt(0).toUpperCase() + action.slice(1)}:\n`;
-        changes[action].forEach((item) => {
-          prompt += `- ${item.type} with tags: ${JSON.stringify(item.tags)}\n`;
+        filteredItems.forEach((item) => {
+          prompt += `- ${item.type} (ID: ${
+            item.id
+          }) with tags: ${JSON.stringify(item.tags)}\n`;
         });
       }
     });
+
     console.log(prompt);
     return prompt;
   }
+
   showError(message) {
     this.contentEl.innerHTML = `
             <div class="error">
@@ -156,48 +199,10 @@ class FirstEditCelebrator {
             </div>
         `;
   }
-  async showCelebration(data) {
-    // Show initial status
-    const statusDiv = document.createElement("div");
-    statusDiv.className = "status";
-    statusDiv.textContent = "INITIALIZING...";
-    this.contentEl.appendChild(statusDiv);
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    statusDiv.textContent = "ANALYZING...";
-
-    // Start fetching data during the "analyzing" phase
-    const response = await fetch("http://localhost:5000/api/summarize", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        changeset_id: data.changesetId,
-        prompt: data.prompt,
-      }),
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    statusDiv.remove();
-
-    const messageDiv = document.createElement("div");
-    messageDiv.className = "message";
-    this.contentEl.appendChild(messageDiv);
-
-    const result = await response.json();
-    await this.typeText(result.summary.toUpperCase(), messageDiv);
-
-    const button = document.createElement("button");
-    button.className = "share-button";
-    button.textContent = "COPY TEXT >>";
-    button.addEventListener("click", () => this.copyText(result.summary));
-    this.contentEl.appendChild(button);
-
-    this.cursor.style.display = "block";
-  }
-
   async copyText(text) {
+    const fullText = `${text} Check it out ➡️ https://osmcha.org/changesets/${this.currentChangesetId} | Make YOUR first edit ➡️ https://openstreetmap.us/get-involved/start-mapping/`;
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(fullText);
       const button = document.querySelector(".share-button");
       button.textContent = ">> COPIED <<";
       setTimeout(() => {
